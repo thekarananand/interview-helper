@@ -25,7 +25,7 @@
       inset: 0;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
+      justify-content: flex-start;
       padding: 16px;
       pointer-events: none;
     }
@@ -244,10 +244,12 @@
           if (msg.type === 'note') {
             notesEl.textContent = msg.content;
             notesEl.classList.toggle('empty', !msg.content);
-            notesEl.scrollTop = notesEl.scrollHeight;
+            notesEl.scrollTop = 0;
           } else if (msg.type === 'clear') {
             notesEl.textContent = '';
             notesEl.classList.add('empty');
+          } else if (msg.type === 'scroll') {
+            notesEl.scrollBy({ top: msg.delta, behavior: 'smooth' });
           } else if (msg.type === 'move') {
             window.electronAPI.moveWindow(msg.position);
           }
