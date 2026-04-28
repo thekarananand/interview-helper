@@ -57,15 +57,14 @@ app.whenReady().then(() => {
   ipcMain.on('move-window', (_, position) => {
     if (!win) return;
     const { screen } = require('electron');
-    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+    const { x: wx, y: wy, width, height } = screen.getPrimaryDisplay().workArea;
     const margin = 20;
-    const winWidth = 480;
-    const winHeight = 600;
+    const { width: winWidth, height: winHeight } = win.getBounds();
     const coords = {
-      'top-left':     { x: margin,               y: margin },
-      'top-right':    { x: width - winWidth - margin,  y: margin },
-      'bottom-left':  { x: margin,               y: height - winHeight - margin },
-      'bottom-right': { x: width - winWidth - margin,  y: height - winHeight - margin },
+      'top-left':     { x: wx + margin,                    y: wy + margin },
+      'top-right':    { x: wx + width - winWidth - margin, y: wy + margin },
+      'bottom-left':  { x: wx + margin,                    y: wy + height - winHeight - margin },
+      'bottom-right': { x: wx + width - winWidth - margin, y: wy + height - winHeight - margin },
     };
     const pos = coords[position];
     if (pos) win.setPosition(pos.x, pos.y);
