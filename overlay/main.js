@@ -1,7 +1,21 @@
 const { app, BrowserWindow, globalShortcut, ipcMain } = require('electron');
 const path = require('path');
+const os   = require('os');
+const { startServer } = require('./server');
+const QRCode = require('qrcode');
 
 let win;
+let serverPort = 3000;
+
+function getLanUrls(port) {
+  const urls = [];
+  for (const addrs of Object.values(os.networkInterfaces())) {
+    for (const a of addrs) {
+      if (a.family === 'IPv4' && !a.internal) urls.push(`http://${a.address}:${port}`);
+    }
+  }
+  return urls;
+}
 
 function createWindow() {
   const { screen } = require('electron');
@@ -40,7 +54,32 @@ function createWindow() {
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  // Start the embedded HTTP + WebSocket server before showing the window
+  try {
+    const { port } = await startServer();
+    serverPort = port;
+    console.log('[main] server ready on port', port);
+    console.log('[main] sender URLs:', getLanUrls(port).join(', '));
+  } catch (err) {
+    console.error('[main] server failed to start:', err);
+    app.quit();
+    return;
+  }
+
+  // Provide WS URL, LAN URLs, and QR code to the renderer
+  ipcMain.handle('get-server-urls', async () => {
+    const lanUrls = getLanUrls(serverPort);
+    let qrDataUrl = null;
+    if (lanUrls.length > 0) {
+      qrDataUrl = await QRCode.toDataURL(lanUrls[0], {
+        width: 200, margin: 2,
+        color: { dark: '#000000', light: '#ffffff' },
+      });
+    }
+    return { wsUrl: `ws://localhost:${serverPort}/overlay`, lanUrls, qrDataUrl };
+  });
+
   createWindow();
 
   // Toggle settings panel
@@ -53,11 +92,11 @@ app.whenReady().then(() => {
     if (win) win.setIgnoreMouseEvents(ignore, { forward: true });
   });
 
-  // Reposition the overlay to a corner sent from the sender UI
   ipcMain.on('quit-app', () => {
     app.quit();
   });
 
+  // Reposition the overlay to a corner sent from the sender UI
   ipcMain.on('move-window', (_, position) => {
     if (!win) return;
     const { screen } = require('electron');

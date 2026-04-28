@@ -6,20 +6,32 @@
   <title>Stealth Notes Overlay</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --card:    #0e0e0e;
+      --border:  #1c1c1c;
+      --border2: #282828;
+      --text:    #d8d8d8;
+      --muted:   #3a3a3a;
+      --dim:     #555;
+      --green:   #3ddc84;
+      --red:     #ff453a;
+      --font:    'Space Mono', monospace;
+    }
 
     html, body {
       background: transparent;
       overflow: hidden;
       width: 100%;
       height: 100%;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--font);
       user-select: none;
     }
 
-    /* ── Notes pane ─────────────────────────────────────────── */
+    /* ── Notes pane ─────────────────────────────────────────────── */
     #notes-wrap {
       position: fixed;
       inset: 0;
@@ -33,237 +45,353 @@
     #notes {
       max-height: 100%;
       overflow-y: auto;
-      background: rgba(10, 10, 10, 0.72);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(8, 8, 8, 0.78);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.06);
       padding: 14px 18px;
-      color: #f0f0f0;
-      font-size: 15px;
-      line-height: 1.65;
+      color: #efefef;
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.7;
       white-space: pre-wrap;
       word-break: break-word;
-      box-shadow: none;
-      transition: opacity 0.2s;
+      transition: opacity 0.25s;
     }
 
     #notes.empty { opacity: 0; }
-
-    /* scrollbar */
-    #notes::-webkit-scrollbar { width: 4px; }
+    #notes::-webkit-scrollbar { width: 3px; }
     #notes::-webkit-scrollbar-track { background: transparent; }
-    #notes::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+    #notes::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
-    /* ── Settings panel ─────────────────────────────────────── */
+    /* ── Settings backdrop ─────────────────────────────────────── */
     #settings {
       position: fixed;
       inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0,0,0,0.6);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: rgba(0,0,0,0.72);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       pointer-events: all;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.2s, visibility 0.2s;
+      transition: opacity 0.18s, visibility 0.18s;
     }
 
-    #settings.visible {
-      opacity: 1;
-      visibility: visible;
+    #settings.visible { opacity: 1; visibility: visible; }
+    #settings.visible .card { transform: scale(1); opacity: 1; }
+
+    /* ── Card ──────────────────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      width: 300px;
+      overflow: hidden;
+      transform: scale(0.96);
+      opacity: 0;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.18s;
     }
 
-    .settings-card {
-      background: #1c1c1e;
-      border: 1px solid #333;
-      border-radius: 16px;
-      padding: 28px 24px;
-      width: 340px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
-      position: relative;
+    /* header */
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--dim);
     }
 
     #close-btn {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
+      background: none;
       border: none;
-      background: #2a2a2e;
-      color: #888;
-      font-size: 14px;
-      line-height: 1;
+      color: var(--muted);
+      font-family: var(--font);
+      font-size: 13px;
       cursor: pointer;
+      padding: 2px 4px;
+      line-height: 1;
+      transition: color 0.12s;
+    }
+    #close-btn:hover { color: var(--text); }
+
+    /* QR section */
+    .qr-section {
+      padding: 20px 0 16px;
+      display: flex;
+      justify-content: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    #qr-img {
+      width: 172px;
+      height: 172px;
+      border-radius: 4px;
+      display: none;
+    }
+
+    .qr-placeholder {
+      width: 172px;
+      height: 172px;
+      border-radius: 4px;
+      background: var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.15s, color 0.15s;
-    }
-    #close-btn:hover { background: #3a3a3e; color: #fff; }
-
-    .settings-card h2 {
-      font-size: 16px;
-      font-weight: 600;
-      color: #fff;
-      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: 0.08em;
     }
 
-    .settings-card p {
-      font-size: 12px;
-      color: #777;
-      margin-bottom: 20px;
+    /* ── URL entries ────────────────────────────────────────────── */
+    #lan-urls {
+      border-bottom: 1px solid var(--border);
     }
 
-    label {
-      display: block;
-      font-size: 12px;
-      color: #888;
-      margin-bottom: 6px;
-      font-weight: 500;
-    }
-
-    input[type="text"] {
-      width: 100%;
-      padding: 9px 12px;
-      background: #2a2a2e;
-      border: 1px solid #3a3a3e;
-      border-radius: 8px;
-      color: #f0f0f0;
-      font-size: 14px;
-      font-family: 'SF Mono', 'Fira Code', monospace;
-      outline: none;
-      transition: border-color 0.15s;
-      margin-bottom: 14px;
-    }
-
-    input[type="text"]:focus { border-color: #555; }
-
-    .btn-row {
+    .url-entry {
       display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 10px 12px;
+    }
+    .url-entry + .url-entry {
+      border-top: 1px solid var(--border);
+    }
+
+    /* the copyable button on the left */
+    .url-btn {
+      display: flex;
+      align-items: center;
       gap: 8px;
-    }
-
-    .btn {
       flex: 1;
-      padding: 9px 0;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 500;
+      min-width: 0;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border2);
+      border-radius: 5px;
+      padding: 7px 10px;
       cursor: pointer;
-      border: 1px solid transparent;
-      transition: background 0.15s;
+      transition: background 0.12s, border-color 0.12s;
+      font-family: var(--font);
+      text-align: left;
+    }
+    .url-btn:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: var(--muted);
+    }
+    .url-btn:hover .copy-hint { opacity: 1; }
+    .url-btn.copied { border-color: var(--green); }
+    .url-btn.copied .copy-hint { opacity: 1; color: var(--green); }
+
+    .globe-icon {
+      flex-shrink: 0;
+      width: 13px;
+      height: 13px;
+      color: var(--dim);
     }
 
-    .btn-primary {
-      background: #3b82f6;
-      color: #fff;
-      border-color: #3b82f6;
+    .url-addr {
+      flex: 1;
+      min-width: 0;
+      font-size: 13px;
+      color: var(--text);
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: text;
     }
-    .btn-primary:hover { background: #2563eb; }
 
-    .btn-secondary {
-      background: #2a2a2e;
-      color: #ccc;
-      border-color: #3a3a3e;
+    .copy-hint {
+      flex-shrink: 0;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--dim);
+      opacity: 0;
+      transition: opacity 0.12s, color 0.12s;
     }
-    .btn-secondary:hover { background: #333; }
 
-    .btn-quit {
-      width: 100%;
-      margin-top: 12px;
-      background: transparent;
-      color: #ef4444;
-      border-color: #5c2626;
+    /* status on the right */
+    .net-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
     }
-    .btn-quit:hover { background: #3d1f1f; color: #fca5a5; }
 
-    #conn-status {
-      margin-top: 10px;
-      font-size: 12px;
-      text-align: center;
-      min-height: 16px;
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--muted);
     }
-    #conn-status.ok   { color: #22c55e; }
-    #conn-status.err  { color: #ef4444; }
-    #conn-status.info { color: #888; }
 
-    /* hotkey hint */
+    .status-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--dim);
+      white-space: nowrap;
+    }
+
+    .net-status.ok  .status-dot { background: var(--green); animation: pulse 2.4s ease-in-out infinite; }
+    .net-status.err .status-dot { background: var(--red); animation: none; }
+    .net-status.ok  .status-label { color: #4a4a4a; }
+    .net-status.err .status-label { color: #4a4a4a; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    /* ── Footer — centered quit ─────────────────────────────────── */
+    .card-foot {
+      display: flex;
+      justify-content: center;
+      padding: 12px 16px;
+    }
+
+    #quit-btn {
+      background: none;
+      border: none;
+      font-family: var(--font);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #3d1a1a;
+      cursor: pointer;
+      transition: color 0.12s;
+      padding: 2px 0;
+    }
+    #quit-btn:hover { color: var(--red); }
+
+    /* ── Hotkey hint ────────────────────────────────────────────── */
     #hint {
       margin-top: 10px;
-      font-size: 10px;
-      color: rgba(255,255,255,0.25);
       pointer-events: none;
-      letter-spacing: 0.3px;
-      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .hkey {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 2px solid rgba(255,255,255,0.1);
+      border-radius: 5px;
+      padding: 2px 7px;
+      min-width: 26px;
+      line-height: 1.4;
+    }
+
+    .hkey-label {
+      font-family: var(--font);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.12);
+      margin-left: 5px;
     }
   </style>
 </head>
 <body>
 
-  <!-- Notes display -->
   <div id="notes-wrap">
     <div id="notes" class="empty"></div>
     <div id="hint"></div>
   </div>
 
-  <!-- Settings panel (toggled by Cmd/Ctrl+Shift+.) -->
   <div id="settings">
-    <div class="settings-card">
-      <button id="close-btn" title="Close">✕</button>
-      <h2>Stealth Notes</h2>
-      <p>Enter the sender's WebSocket address</p>
+    <div class="card">
 
-      <label>Sender address</label>
-      <input id="addr-input" type="text" placeholder="ws://192.168.1.x:3000/overlay" spellcheck="false" />
-
-      <div class="btn-row">
-        <button class="btn btn-secondary" id="cancel-btn">Cancel</button>
-        <button class="btn btn-primary" id="connect-btn">Connect</button>
+      <div class="card-head">
+        <span class="card-title">Stealth Notes</span>
+        <button id="close-btn" title="Close">✕</button>
       </div>
-      <div id="conn-status"></div>
-      <button class="btn btn-quit" id="quit-btn">Shut down overlay</button>
+
+      <div class="qr-section">
+        <div class="qr-placeholder" id="qr-placeholder">loading</div>
+        <img id="qr-img" alt="" />
+      </div>
+
+      <div id="lan-urls"></div>
+
+      <div class="card-foot">
+        <button id="quit-btn">Exit</button>
+      </div>
+
     </div>
   </div>
 
   <script>
+    const GLOBE_SVG = `<svg class="globe-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round">
+      <circle cx="7" cy="7" r="5.5"/>
+      <ellipse cx="7" cy="7" rx="2.1" ry="5.5"/>
+      <line x1="1.5" y1="7" x2="12.5" y2="7"/>
+      <line x1="2.2" y1="4.2" x2="11.8" y2="4.2"/>
+      <line x1="2.2" y1="9.8" x2="11.8" y2="9.8"/>
+    </svg>`;
+
     const notesEl    = document.getElementById('notes');
     const settingsEl = document.getElementById('settings');
-    const addrInput  = document.getElementById('addr-input');
-    const connectBtn = document.getElementById('connect-btn');
-    const cancelBtn  = document.getElementById('cancel-btn');
-    const connStatus = document.getElementById('conn-status');
 
-    // ── Persist address ──────────────────────────────────────
-    const STORAGE_KEY = 'senderAddress';
-    addrInput.value = localStorage.getItem(STORAGE_KEY) || '';
-
-    // ── WebSocket ────────────────────────────────────────────
+    // ── WebSocket ────────────────────────────────────────────────
     let ws = null;
     let reconnectTimer = null;
     let currentUrl = null;
     let settingsOpen = false;
+    let wsState = 'info'; // 'ok' | 'err' | 'info'
+    let senderCount = 0;
 
-    function setStatus(msg, cls) {
-      connStatus.textContent = msg;
-      connStatus.className = cls || '';
+    function senderLabel() {
+      return senderCount === 0 ? 'no senders' : senderCount === 1 ? '1 sender' : `${senderCount} senders`;
+    }
+
+    function setStatus(cls) {
+      wsState = cls;
+      document.querySelectorAll('.net-status').forEach(el => {
+        el.className = 'net-status ' + cls;
+        el.querySelector('.status-label').textContent = senderLabel();
+      });
+    }
+
+    function setSenderCount(n) {
+      senderCount = n;
+      document.querySelectorAll('.net-status').forEach(el => {
+        el.querySelector('.status-label').textContent = senderLabel();
+      });
     }
 
     function connectTo(url) {
       if (ws) { ws.onclose = null; ws.close(); }
       clearTimeout(reconnectTimer);
-
       currentUrl = url;
-      setStatus('Connecting…', 'info');
+      setStatus('info');
       ws = new WebSocket(url);
 
       ws.onopen = () => {
-        setStatus('Connected', 'ok');
-        // Close settings on successful connect
+        setStatus('ok');
         if (settingsOpen) closeSettings();
       };
 
@@ -283,28 +411,63 @@
             window.electronAPI.moveWindow(msg.position);
           } else if (msg.type === 'direction') {
             notesEl.style.marginTop = msg.from === 'bottom' ? 'auto' : '';
+          } else if (msg.type === 'sender_count') {
+            setSenderCount(msg.count);
+          }
+          if ((msg.type === 'note' || msg.type === 'clear') && settingsOpen) {
+            closeSettings();
           }
         } catch {}
       };
 
       ws.onclose = () => {
-        setStatus('Disconnected — retrying…', 'err');
+        setStatus('err');
         reconnectTimer = setTimeout(() => connectTo(currentUrl), 3000);
       };
 
-      ws.onerror = () => {
-        setStatus('Connection error', 'err');
-        ws.close();
-      };
+      ws.onerror = () => { ws.close(); };
     }
 
-    // ── Settings panel ───────────────────────────────────────
+    // ── LAN URL display ──────────────────────────────────────────
+    function renderLanUrls(urls) {
+      const el = document.getElementById('lan-urls');
+      if (!urls.length) {
+        el.innerHTML = '<div class="url-entry"><span style="font-size:10px;color:var(--muted);letter-spacing:.06em">no interfaces found</span></div>';
+        return;
+      }
+      el.innerHTML = '';
+      for (const url of urls) {
+        const entry = document.createElement('div');
+        entry.className = 'url-entry';
+
+        const btn = document.createElement('button');
+        btn.className = 'url-btn';
+        btn.innerHTML = `${GLOBE_SVG}<span class="url-addr">${url.replace(/^https?:\/\//, '')}</span><span class="copy-hint">copy</span>`;
+        btn.addEventListener('click', () => {
+          navigator.clipboard.writeText(url).then(() => {
+            btn.classList.add('copied');
+            btn.querySelector('.copy-hint').textContent = 'done';
+            setTimeout(() => {
+              btn.classList.remove('copied');
+              btn.querySelector('.copy-hint').textContent = 'copy';
+            }, 2000);
+          });
+        });
+
+        const status = document.createElement('div');
+        status.className = 'net-status ' + wsState;
+        status.innerHTML = `<span class="status-dot"></span><span class="status-label">${senderLabel()}</span>`;
+
+        entry.append(btn, status);
+        el.appendChild(entry);
+      }
+    }
+
+    // ── Settings panel ───────────────────────────────────────────
     function openSettings() {
       settingsOpen = true;
       settingsEl.classList.add('visible');
       window.electronAPI.setIgnoreMouse(false);
-      addrInput.focus();
-      addrInput.select();
     }
 
     function closeSettings() {
@@ -318,35 +481,38 @@
       else openSettings();
     });
 
-    connectBtn.addEventListener('click', () => {
-      const url = addrInput.value.trim();
-      if (!url) return;
-      localStorage.setItem(STORAGE_KEY, url);
-      connectTo(url);
-    });
-
-    cancelBtn.addEventListener('click', closeSettings);
     document.getElementById('close-btn').addEventListener('click', closeSettings);
     document.getElementById('quit-btn').addEventListener('click', () => window.electronAPI.quit());
 
-    addrInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') connectBtn.click();
-      if (e.key === 'Escape') closeSettings();
-    });
-
-    // ── Platform-aware shortcut hint ─────────────────────────────
+    // ── Hotkey hint ──────────────────────────────────────────────
     const isMac = navigator.platform.startsWith('Mac');
-    document.getElementById('hint').textContent =
-      (isMac ? '⌘⇧.' : 'Ctrl+Shift+.') + ' to open settings';
+    const keys = isMac
+      ? ['⌘', '⇧', '.']
+      : ['Ctrl', 'Shift', '.'];
+    document.getElementById('hint').innerHTML =
+      keys.map(k => `<span class="hkey">${k}</span>`).join('') +
+      `<span class="hkey-label">settings</span>`;
 
-    // ── Auto-connect on load ─────────────────────────────────
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      connectTo(saved);
-    } else {
-      // No saved address — open settings immediately
-      setTimeout(openSettings, 300);
+    // ── Init ─────────────────────────────────────────────────────
+    async function init() {
+      let wsUrl = 'ws://localhost:3000/overlay';
+      try {
+        const { wsUrl: u, lanUrls, qrDataUrl } = await window.electronAPI.getServerUrls();
+        wsUrl = u;
+        renderLanUrls(lanUrls);
+        if (qrDataUrl) {
+          document.getElementById('qr-img').src = qrDataUrl;
+          document.getElementById('qr-img').style.display = 'block';
+          document.getElementById('qr-placeholder').style.display = 'none';
+        }
+      } catch (err) {
+        console.warn('[renderer] getServerUrls failed:', err);
+        renderLanUrls([]);
+      }
+      connectTo(wsUrl);
     }
+
+    init();
   </script>
 </body>
 </html>

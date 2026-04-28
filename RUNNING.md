@@ -1,16 +1,6 @@
 # Running Stealth Notes
 
-## Sender (Device A)
-
-```bash
-cd sender
-npm install
-npm start
-```
-
-Opens on `http://localhost:3000`. Terminal prints LAN WebSocket addresses.
-
-## Overlay (Device B)
+## Start
 
 ```bash
 cd overlay
@@ -18,13 +8,33 @@ npm install
 npx electron .
 ```
 
-Press **Cmd+Shift+.** to open settings, enter the sender address (e.g. `ws://192.168.1.x:3000/overlay`), click Connect.
+The overlay window appears immediately on screen — transparent, always-on-top, hidden from screen capture.
 
-## Build a distributable overlay
+## Connect a sender device
+
+1. Press **Cmd/Ctrl+Shift+.** on the overlay machine to open settings
+2. Scan the QR code with your phone (or open the displayed URL in any browser on the same network)
+3. The mobile sender UI opens — start typing and notes appear on the overlay in real time
+4. Settings close automatically the moment you start typing
+
+## Sender UI controls
+
+| Control | Action |
+|---|---|
+| **clear** | Clear the overlay |
+| **↖ ↗ ↙ ↘** | Move overlay to a corner |
+| **▲ ▼** | Scroll overlay content up/down |
+
+## Change the port
+
+```bash
+PORT=4000 npx electron .
+```
+
+## Build a distributable
 
 ```bash
 cd overlay
-npm install --save-dev electron-builder
 npx electron-builder --mac        # macOS .dmg
 npx electron-builder --win        # Windows .exe
 ```

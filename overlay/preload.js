@@ -7,4 +7,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setIgnoreMouse: (ignore) => ipcRenderer.send('set-ignore-mouse', ignore),
   moveWindow: (position) => ipcRenderer.send('move-window', position),
   quit: () => ipcRenderer.send('quit-app'),
+  getServerUrls: () => ipcRenderer.invoke('get-server-urls'),
 });
