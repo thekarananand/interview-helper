@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stealth Notes Overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: transparent;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+      font-family: 'JetBrains Mono', monospace;
+      user-select: none;
+    }
+
+    /* ── Notes pane ─────────────────────────────────────────── */
+    #notes-wrap {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 16px;
+      pointer-events: none;
+    }
+
+    #notes {
+      max-height: 100%;
+      overflow-y: auto;
+      background: rgba(10, 10, 10, 0.82);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 14px 18px;
+      color: #f0f0f0;
+      font-size: 15px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.5);
+      transition: opacity 0.2s;
+    }
+
+    #notes.empty { opacity: 0; }
+
+    /* scrollbar */
+    #notes::-webkit-scrollbar { width: 4px; }
+    #notes::-webkit-scrollbar-track { background: transparent; }
+    #notes::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+    /* ── Settings panel ─────────────────────────────────────── */
+    #settings {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      pointer-events: all;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+    }
+
+    #settings.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .settings-card {
+      background: #1c1c1e;
+      border: 1px solid #333;
+      border-radius: 16px;
+      padding: 28px 24px;
+      width: 340px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    }
+
+    .settings-card h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .settings-card p {
+      font-size: 12px;
+      color: #777;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 9px 12px;
+      background: #2a2a2e;
+      border: 1px solid #3a3a3e;
+      border-radius: 8px;
+      color: #f0f0f0;
+      font-size: 14px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      outline: none;
+      transition: border-color 0.15s;
+      margin-bottom: 14px;
+    }
+
+    input[type="text"]:focus { border-color: #555; }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 9px 0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background 0.15s;
+    }
+
+    .btn-primary {
+      background: #3b82f6;
+      color: #fff;
+      border-color: #3b82f6;
+    }
+    .btn-primary:hover { background: #2563eb; }
+
+    .btn-secondary {
+      background: #2a2a2e;
+      color: #ccc;
+      border-color: #3a3a3e;
+    }
+    .btn-secondary:hover { background: #333; }
+
+    #conn-status {
+      margin-top: 10px;
+      font-size: 12px;
+      text-align: center;
+      min-height: 16px;
+    }
+    #conn-status.ok   { color: #22c55e; }
+    #conn-status.err  { color: #ef4444; }
+    #conn-status.info { color: #888; }
+
+    /* hotkey hint */
+    #hint {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      color: rgba(255,255,255,0.25);
+      pointer-events: none;
+      letter-spacing: 0.3px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Notes display -->
+  <div id="notes-wrap">
+    <div id="notes" class="empty"></div>
+  </div>
+
+  <!-- Settings panel (toggled by Cmd/Ctrl+Shift+.) -->
+  <div id="settings">
+    <div class="settings-card">
+      <h2>Stealth Notes</h2>
+      <p>Enter the sender's WebSocket address</p>
+
+      <label>Sender address</label>
+      <input id="addr-input" type="text" placeholder="ws://192.168.1.x:3000/overlay" spellcheck="false" />
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" id="cancel-btn">Cancel</button>
+        <button class="btn btn-primary" id="connect-btn">Connect</button>
+      </div>
+      <div id="conn-status"></div>
+    </div>
+  </div>
+
+  <div id="hint">⌘⇧. to open settings</div>
+
+  <script>
+    const notesEl    = document.getElementById('notes');
+    const settingsEl = document.getElementById('settings');
+    const addrInput  = document.getElementById('addr-input');
+    const connectBtn = document.getElementById('connect-btn');
+    const cancelBtn  = document.getElementById('cancel-btn');
+    const connStatus = document.getElementById('conn-status');
+
+    // ── Persist address ──────────────────────────────────────
+    const STORAGE_KEY = 'senderAddress';
+    addrInput.value = localStorage.getItem(STORAGE_KEY) || '';
+
+    // ── WebSocket ────────────────────────────────────────────
+    let ws = null;
+    let reconnectTimer = null;
+    let currentUrl = null;
+    let settingsOpen = false;
+
+    function setStatus(msg, cls) {
+      connStatus.textContent = msg;
+      connStatus.className = cls || '';
+    }
+
+    function connectTo(url) {
+      if (ws) { ws.onclose = null; ws.close(); }
+      clearTimeout(reconnectTimer);
+
+      currentUrl = url;
+      setStatus('Connecting…', 'info');
+      ws = new WebSocket(url);
+
+      ws.onopen = () => {
+        setStatus('Connected', 'ok');
+        // Close settings on successful connect
+        if (settingsOpen) closeSettings();
+      };
+
+      ws.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data);
+          if (msg.type === 'note') {
+            notesEl.textContent = msg.content;
+            notesEl.classList.toggle('empty', !msg.content);
+            notesEl.scrollTop = notesEl.scrollHeight;
+          } else if (msg.type === 'clear') {
+            notesEl.textContent = '';
+            notesEl.classList.add('empty');
+          }
+        } catch {}
+      };
+
+      ws.onclose = () => {
+        setStatus('Disconnected — retrying…', 'err');
+        reconnectTimer = setTimeout(() => connectTo(currentUrl), 3000);
+      };
+
+      ws.onerror = () => {
+        setStatus('Connection error', 'err');
+        ws.close();
+      };
+    }
+
+    // ── Settings panel ───────────────────────────────────────
+    function openSettings() {
+      settingsOpen = true;
+      settingsEl.classList.add('visible');
+      window.electronAPI.setIgnoreMouse(false);
+      addrInput.focus();
+      addrInput.select();
+    }
+
+    function closeSettings() {
+      settingsOpen = false;
+      settingsEl.classList.remove('visible');
+      window.electronAPI.setIgnoreMouse(true);
+    }
+
+    window.electronAPI.onToggleSettings(() => {
+      if (settingsOpen) closeSettings();
+      else openSettings();
+    });
+
+    connectBtn.addEventListener('click', () => {
+      const url = addrInput.value.trim();
+      if (!url) return;
+      localStorage.setItem(STORAGE_KEY, url);
+      connectTo(url);
+    });
+
+    cancelBtn.addEventListener('click', closeSettings);
+
+    addrInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') connectBtn.click();
+      if (e.key === 'Escape') closeSettings();
+    });
+
+    // ── Auto-connect on load ─────────────────────────────────
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      connectTo(saved);
+    } else {
+      // No saved address — open settings immediately
+      setTimeout(openSettings, 300);
+    }
+  </script>
+</body>
+</html>

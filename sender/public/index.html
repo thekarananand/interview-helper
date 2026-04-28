@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stealth Notes — Sender</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #e8e8e8;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      background: #1a1a1a;
+      border-bottom: 1px solid #2a2a2a;
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      color: #fff;
+    }
+
+    #status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #888;
+      margin-left: auto;
+    }
+
+    #status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #555;
+      transition: background 0.3s;
+    }
+
+    #status-dot.connected    { background: #22c55e; }
+    #status-dot.disconnected { background: #ef4444; }
+
+    #overlay-count {
+      font-size: 12px;
+      color: #666;
+      padding: 2px 8px;
+      background: #222;
+      border-radius: 10px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 20px;
+      background: #141414;
+      border-bottom: 1px solid #2a2a2a;
+      flex-shrink: 0;
+    }
+
+    button {
+      padding: 6px 14px;
+      border: 1px solid #333;
+      border-radius: 6px;
+      background: #222;
+      color: #ccc;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    button:hover { background: #2d2d2d; color: #fff; }
+    button:active { background: #333; }
+
+    #clear-btn { border-color: #5c2626; color: #f87171; }
+    #clear-btn:hover { background: #3d1f1f; color: #fca5a5; }
+
+    #char-count {
+      margin-left: auto;
+      font-size: 12px;
+      color: #555;
+      align-self: center;
+    }
+
+    #note {
+      flex: 1;
+      width: 100%;
+      padding: 20px;
+      background: #0f0f0f;
+      color: #e8e8e8;
+      font-size: 16px;
+      line-height: 1.7;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+    }
+
+    #note::placeholder { color: #444; }
+
+    .info-bar {
+      padding: 8px 20px;
+      background: #141414;
+      border-top: 1px solid #2a2a2a;
+      font-size: 11px;
+      color: #555;
+      flex-shrink: 0;
+    }
+    .info-bar span { color: #666; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Stealth Notes</h1>
+    <div id="status">
+      <div id="status-dot"></div>
+      <span id="status-text">Connecting…</span>
+    </div>
+    <div id="overlay-count">0 overlays</div>
+  </header>
+
+  <div class="toolbar">
+    <button id="clear-btn">Clear overlay</button>
+    <span id="char-count">0 chars</span>
+  </div>
+
+  <textarea id="note" placeholder="Start typing — notes stream to the overlay in real time…" autofocus></textarea>
+
+  <div class="info-bar">
+    Overlay WebSocket: <span id="ws-url"></span>
+  </div>
+
+  <script>
+    const noteEl     = document.getElementById('note');
+    const statusDot  = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const clearBtn   = document.getElementById('clear-btn');
+    const charCount  = document.getElementById('char-count');
+    const overlayCount = document.getElementById('overlay-count');
+    const wsUrlEl    = document.getElementById('ws-url');
+
+    const host = location.host;
+    wsUrlEl.textContent = `ws://${host}/overlay`;
+
+    let ws = null;
+    let reconnectTimer = null;
+    let overlays = 0;
+
+    function connect() {
+      ws = new WebSocket(`ws://${host}/sender`);
+
+      ws.addEventListener('open', () => {
+        statusDot.className = 'connected';
+        statusText.textContent = 'Connected';
+        clearTimeout(reconnectTimer);
+        // Push current note content immediately on reconnect
+        send({ type: 'note', content: noteEl.value });
+      });
+
+      ws.addEventListener('close', () => {
+        statusDot.className = 'disconnected';
+        statusText.textContent = 'Disconnected';
+        reconnectTimer = setTimeout(connect, 3000);
+      });
+
+      ws.addEventListener('error', () => {
+        ws.close();
+      });
+
+      // Server echoes overlay client count updates
+      ws.addEventListener('message', (ev) => {
+        try {
+          const msg = JSON.parse(ev.data);
+          if (msg.type === 'overlay_count') {
+            overlays = msg.count;
+            overlayCount.textContent = `${overlays} overlay${overlays !== 1 ? 's' : ''}`;
+          }
+        } catch {}
+      });
+    }
+
+    function send(payload) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(payload));
+      }
+    }
+
+    noteEl.addEventListener('input', () => {
+      const content = noteEl.value;
+      charCount.textContent = `${content.length} char${content.length !== 1 ? 's' : ''}`;
+      send({ type: 'note', content });
+    });
+
+    clearBtn.addEventListener('click', () => {
+      noteEl.value = '';
+      charCount.textContent = '0 chars';
+      send({ type: 'clear' });
+      noteEl.focus();
+    });
+
+    connect();
+  </script>
+</body>
+</html>

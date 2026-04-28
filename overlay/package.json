@@ -1,0 +1,16 @@
+{
+  "name": "stealth-notes-overlay",
+  "version": "1.0.0",
+  "description": "Stealth Notes — overlay client",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron-store": "^10.0.0"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^26.8.1"
+  }
+}
