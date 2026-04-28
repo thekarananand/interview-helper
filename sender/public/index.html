@@ -86,6 +86,26 @@
     #clear-btn { border-color: #5c2626; color: #f87171; }
     #clear-btn:hover { background: #3d1f1f; color: #fca5a5; }
 
+    .position-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 8px;
+    }
+    .position-group span {
+      font-size: 12px;
+      color: #555;
+      margin-right: 2px;
+    }
+    .pos-btn {
+      padding: 4px 8px;
+      font-size: 11px;
+      border-color: #2a2a2a;
+      color: #777;
+      line-height: 1;
+    }
+    .pos-btn:hover { color: #aaa; }
+
     #char-count {
       margin-left: auto;
       font-size: 12px;
@@ -132,6 +152,13 @@
 
   <div class="toolbar">
     <button id="clear-btn">Clear overlay</button>
+    <div class="position-group">
+      <span>Move:</span>
+      <button class="pos-btn" data-pos="top-left"     title="Top-left">↖</button>
+      <button class="pos-btn" data-pos="top-right"    title="Top-right">↗</button>
+      <button class="pos-btn" data-pos="bottom-left"  title="Bottom-left">↙</button>
+      <button class="pos-btn" data-pos="bottom-right" title="Bottom-right">↘</button>
+    </div>
     <span id="char-count">0 chars</span>
   </div>
 
@@ -200,6 +227,12 @@
       const content = noteEl.value;
       charCount.textContent = `${content.length} char${content.length !== 1 ? 's' : ''}`;
       send({ type: 'note', content });
+    });
+
+    document.querySelectorAll('.pos-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        send({ type: 'move', position: btn.dataset.pos });
+      });
     });
 
     clearBtn.addEventListener('click', () => {

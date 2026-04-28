@@ -53,6 +53,24 @@ app.whenReady().then(() => {
     if (win) win.setIgnoreMouseEvents(ignore, { forward: true });
   });
 
+  // Reposition the overlay to a corner sent from the sender UI
+  ipcMain.on('move-window', (_, position) => {
+    if (!win) return;
+    const { screen } = require('electron');
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+    const margin = 20;
+    const winWidth = 480;
+    const winHeight = 600;
+    const coords = {
+      'top-left':     { x: margin,               y: margin },
+      'top-right':    { x: width - winWidth - margin,  y: margin },
+      'bottom-left':  { x: margin,               y: height - winHeight - margin },
+      'bottom-right': { x: width - winWidth - margin,  y: height - winHeight - margin },
+    };
+    const pos = coords[position];
+    if (pos) win.setPosition(pos.x, pos.y);
+  });
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

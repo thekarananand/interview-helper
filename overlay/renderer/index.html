@@ -199,7 +199,7 @@
     </div>
   </div>
 
-  <div id="hint">⌘⇧. to open settings</div>
+  <div id="hint"></div>
 
   <script>
     const notesEl    = document.getElementById('notes');
@@ -248,6 +248,8 @@
           } else if (msg.type === 'clear') {
             notesEl.textContent = '';
             notesEl.classList.add('empty');
+          } else if (msg.type === 'move') {
+            window.electronAPI.moveWindow(msg.position);
           }
         } catch {}
       };
@@ -296,6 +298,11 @@
       if (e.key === 'Enter') connectBtn.click();
       if (e.key === 'Escape') closeSettings();
     });
+
+    // ── Platform-aware shortcut hint ─────────────────────────────
+    const isMac = navigator.platform.startsWith('Mac');
+    document.getElementById('hint').textContent =
+      (isMac ? '⌘⇧.' : 'Ctrl+Shift+.') + ' to open settings';
 
     // ── Auto-connect on load ─────────────────────────────────
     const saved = localStorage.getItem(STORAGE_KEY);
