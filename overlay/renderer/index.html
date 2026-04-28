@@ -126,6 +126,17 @@
     }
     #close-btn:hover { color: var(--text); }
 
+    /* Instruction line */
+    .card-instruction {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 10px;
+      line-height: 1.6;
+      letter-spacing: 0.04em;
+      color: var(--dim);
+      text-align: center;
+    }
+
     /* QR section */
     .qr-section {
       padding: 20px 0 16px;
@@ -326,8 +337,12 @@
     <div class="card">
 
       <div class="card-head">
-        <span class="card-title">Stealth Notes</span>
+        <span class="card-title">Overlay</span>
         <button id="close-btn" title="Close">✕</button>
+      </div>
+
+      <div class="card-instruction">
+        Connect to the same network as this PC,<br>then scan the QR or open the URL below.
       </div>
 
       <div class="qr-section">
@@ -338,7 +353,7 @@
       <div id="lan-urls"></div>
 
       <div class="card-foot">
-        <button id="quit-btn">Exit</button>
+        <button id="quit-btn">Exit Overlay</button>
       </div>
 
     </div>

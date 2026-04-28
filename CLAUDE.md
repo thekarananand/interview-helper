@@ -69,7 +69,13 @@ The server fans all messages from `/sender` to `/overlay` clients. It also pushe
 - `setVisibleOnAllWorkspaces(true)` — survives Space/desktop switches
 
 ### Sender web UI (`overlay/public/index.html`)
-Mobile-first design. Controls: clear, overlay position (↖↗↙↘), scroll (▲▼), char count. Connects to `/sender` WS and streams every keystroke as a `note` message.
+Mobile-first design. Controls: clear, overlay position (↖↗↙↘), scroll (▲▼). Connects to `/sender` WS and streams every keystroke as a `note` message.
+
+Each position button sends **two messages atomically**: `move` (reposition window) and `direction` (anchor notes from top or bottom). The `from` value is derived from the position prefix: `"top-*"` → `"top"`, `"bottom-*"` → `"bottom"`.
+
+Bottom-anchoring is implemented via `marginTop: auto` on `#notes` inside the flex-column `#notes-wrap` (not via `flex-direction: column-reverse`).
+
+`electron-store` is listed in dependencies but unused — the renderer uses `localStorage` instead (no sensitive data, noted in `preload.js`).
 
 ## Changing the port
 ```bash
