@@ -6,4 +6,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onToggleSettings: (cb) => ipcRenderer.on('toggle-settings', cb),
   setIgnoreMouse: (ignore) => ipcRenderer.send('set-ignore-mouse', ignore),
   moveWindow: (position) => ipcRenderer.send('move-window', position),
+  quit: () => ipcRenderer.send('quit-app'),
 });

@@ -256,7 +256,9 @@
 
     document.querySelectorAll('.pos-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        send({ type: 'move', position: btn.dataset.pos });
+        const pos = btn.dataset.pos;
+        send({ type: 'move', position: pos });
+        send({ type: 'direction', from: pos.startsWith('top') ? 'top' : 'bottom' });
       });
     });
 

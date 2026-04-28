@@ -54,6 +54,10 @@ app.whenReady().then(() => {
   });
 
   // Reposition the overlay to a corner sent from the sender UI
+  ipcMain.on('quit-app', () => {
+    app.quit();
+  });
+
   ipcMain.on('move-window', (_, position) => {
     if (!win) return;
     const { screen } = require('electron');

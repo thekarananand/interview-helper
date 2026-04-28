@@ -83,7 +83,28 @@
       padding: 28px 24px;
       width: 340px;
       box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+      position: relative;
     }
+
+    #close-btn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: none;
+      background: #2a2a2e;
+      color: #888;
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    #close-btn:hover { background: #3a3a3e; color: #fff; }
 
     .settings-card h2 {
       font-size: 16px;
@@ -152,6 +173,15 @@
     }
     .btn-secondary:hover { background: #333; }
 
+    .btn-quit {
+      width: 100%;
+      margin-top: 12px;
+      background: transparent;
+      color: #ef4444;
+      border-color: #5c2626;
+    }
+    .btn-quit:hover { background: #3d1f1f; color: #fca5a5; }
+
     #conn-status {
       margin-top: 10px;
       font-size: 12px;
@@ -164,14 +194,12 @@
 
     /* hotkey hint */
     #hint {
-      position: fixed;
-      bottom: 8px;
-      left: 50%;
-      transform: translateX(-50%);
+      margin-top: 10px;
       font-size: 10px;
       color: rgba(255,255,255,0.25);
       pointer-events: none;
       letter-spacing: 0.3px;
+      text-align: center;
     }
   </style>
 </head>
@@ -180,11 +208,13 @@
   <!-- Notes display -->
   <div id="notes-wrap">
     <div id="notes" class="empty"></div>
+    <div id="hint"></div>
   </div>
 
   <!-- Settings panel (toggled by Cmd/Ctrl+Shift+.) -->
   <div id="settings">
     <div class="settings-card">
+      <button id="close-btn" title="Close">✕</button>
       <h2>Stealth Notes</h2>
       <p>Enter the sender's WebSocket address</p>
 
@@ -196,10 +226,9 @@
         <button class="btn btn-primary" id="connect-btn">Connect</button>
       </div>
       <div id="conn-status"></div>
+      <button class="btn btn-quit" id="quit-btn">Shut down overlay</button>
     </div>
   </div>
-
-  <div id="hint"></div>
 
   <script>
     const notesEl    = document.getElementById('notes');
@@ -252,6 +281,8 @@
             notesEl.scrollBy({ top: msg.delta, behavior: 'smooth' });
           } else if (msg.type === 'move') {
             window.electronAPI.moveWindow(msg.position);
+          } else if (msg.type === 'direction') {
+            notesEl.style.marginTop = msg.from === 'bottom' ? 'auto' : '';
           }
         } catch {}
       };
@@ -295,6 +326,8 @@
     });
 
     cancelBtn.addEventListener('click', closeSettings);
+    document.getElementById('close-btn').addEventListener('click', closeSettings);
+    document.getElementById('quit-btn').addEventListener('click', () => window.electronAPI.quit());
 
     addrInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') connectBtn.click();
