@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Stealth Notes Overlay</title>
+  <title>Ghost Protocol</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -14,12 +15,13 @@
       --card:    #0e0e0e;
       --border:  #1c1c1c;
       --border2: #282828;
-      --text:    #d8d8d8;
-      --muted:   #3a3a3a;
-      --dim:     #555;
+      --text:    #f2f2f2;
+      --muted:   #4a4a4a;
+      --dim:     #909090;
       --green:   #3ddc84;
       --red:     #ff453a;
-      --font:    'Space Mono', monospace;
+      --font-ui:   'Inter', sans-serif;
+      --font-mono: 'Space Mono', monospace;
     }
 
     html, body {
@@ -27,7 +29,7 @@
       overflow: hidden;
       width: 100%;
       height: 100%;
-      font-family: var(--font);
+      font-family: var(--font-ui);
       user-select: none;
     }
 
@@ -51,11 +53,10 @@
       border-radius: 10px;
       border: 1px solid rgba(255,255,255,0.06);
       padding: 14px 18px;
-      color: #efefef;
-      font-family: var(--font);
+      color: #f5f5f5;
+      font-family: var(--font-mono);
       font-size: 14px;
       line-height: 1.7;
-      white-space: pre-wrap;
       word-break: break-word;
       transition: opacity 0.25s;
     }
@@ -65,11 +66,47 @@
     #notes::-webkit-scrollbar-track { background: transparent; }
     #notes::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
+    /* ── Markdown element styles ───────────────────────────────── */
+    #notes h1, #notes h2, #notes h3 { color: #fff; font-weight: 700; margin-bottom: 6px; }
+    #notes h1 { font-size: 18px; }
+    #notes h2 { font-size: 15px; }
+    #notes h3 { font-size: 13px; }
+    #notes p  { margin-bottom: 8px; }
+    #notes p:last-child { margin-bottom: 0; }
+    #notes strong { color: #fff; }
+    #notes em { font-style: italic; color: #d0d0d0; }
+    #notes code {
+      background: rgba(255,255,255,0.08);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+    #notes pre {
+      background: rgba(255,255,255,0.06);
+      border-radius: 5px;
+      padding: 10px 12px;
+      overflow-x: auto;
+      margin-bottom: 8px;
+    }
+    #notes pre code { background: none; padding: 0; }
+    #notes ul, #notes ol { padding-left: 18px; margin-bottom: 8px; }
+    #notes li { margin-bottom: 3px; }
+    #notes blockquote {
+      border-left: 2px solid rgba(255,255,255,0.2);
+      padding-left: 10px;
+      color: #aaa;
+      margin-bottom: 8px;
+    }
+    #notes hr { border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 10px 0; }
+    #notes a { color: #7ab4f5; text-decoration: underline; }
+
     /* ── Settings backdrop ─────────────────────────────────────── */
     #settings {
       position: fixed;
       inset: 0;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       background: rgba(0,0,0,0.72);
@@ -100,7 +137,7 @@
     .card-head {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
       padding: 14px 16px 12px;
       border-bottom: 1px solid var(--border);
     }
@@ -112,19 +149,6 @@
       text-transform: uppercase;
       color: var(--dim);
     }
-
-    #close-btn {
-      background: none;
-      border: none;
-      color: var(--muted);
-      font-family: var(--font);
-      font-size: 13px;
-      cursor: pointer;
-      padding: 2px 4px;
-      line-height: 1;
-      transition: color 0.12s;
-    }
-    #close-btn:hover { color: var(--text); }
 
     /* Instruction line */
     .card-instruction {
@@ -184,6 +208,7 @@
     .url-btn {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
       flex: 1;
       min-width: 0;
@@ -191,10 +216,10 @@
       border: 1px solid var(--border2);
       border-radius: 5px;
       padding: 7px 10px;
+      position: relative;
       cursor: pointer;
       transition: background 0.12s, border-color 0.12s;
-      font-family: var(--font);
-      text-align: left;
+      font-family: var(--font-ui);
     }
     .url-btn:hover {
       background: rgba(255,255,255,0.06);
@@ -205,16 +230,16 @@
     .url-btn.copied .copy-hint { opacity: 1; color: var(--green); }
 
     .globe-icon {
-      flex-shrink: 0;
+      position: absolute;
+      left: 10px;
       width: 13px;
       height: 13px;
       color: var(--dim);
     }
 
     .url-addr {
-      flex: 1;
-      min-width: 0;
-      font-size: 13px;
+      font-family: var(--font-mono);
+      font-size: 11px;
       color: var(--text);
       letter-spacing: 0.02em;
       white-space: nowrap;
@@ -224,7 +249,8 @@
     }
 
     .copy-hint {
-      flex-shrink: 0;
+      position: absolute;
+      right: 10px;
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.14em;
@@ -258,8 +284,8 @@
 
     .net-status.ok  .status-dot { background: var(--green); animation: pulse 2.4s ease-in-out infinite; }
     .net-status.err .status-dot { background: var(--red); animation: none; }
-    .net-status.ok  .status-label { color: #4a4a4a; }
-    .net-status.err .status-label { color: #4a4a4a; }
+    .net-status.ok  .status-label { color: #888; }
+    .net-status.err .status-label { color: #888; }
 
     @keyframes pulse {
       0%, 100% { opacity: 1; }
@@ -273,10 +299,19 @@
       padding: 12px 16px;
     }
 
+    #settings-hint {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      margin-top: 12px;
+      pointer-events: none;
+    }
+
     #quit-btn {
       background: none;
       border: none;
-      font-family: var(--font);
+      font-family: var(--font-ui);
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.16em;
@@ -288,24 +323,25 @@
     }
     #quit-btn:hover { color: var(--red); }
 
-    /* ── Hotkey hint ────────────────────────────────────────────── */
+    /* ── Hotkey hint (overlay bottom) ──────────────────────────── */
     #hint {
-      margin-top: 10px;
+      margin-top: 8px;
       pointer-events: none;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 3px;
+      transition: opacity 0.18s;
     }
 
     .hkey {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      font-family: var(--font-ui);
       font-size: 13px;
       font-weight: 500;
-      color: rgba(255,255,255,0.22);
+      color: rgba(255,255,255,0.55);
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.1);
       border-bottom: 2px solid rgba(255,255,255,0.1);
@@ -316,12 +352,12 @@
     }
 
     .hkey-label {
-      font-family: var(--font);
+      font-family: var(--font-ui);
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.38);
       margin-left: 5px;
     }
   </style>
@@ -337,12 +373,11 @@
     <div class="card">
 
       <div class="card-head">
-        <span class="card-title">Overlay</span>
-        <button id="close-btn" title="Close">✕</button>
+        <span class="card-title">Ghost Protocol</span>
       </div>
 
       <div class="card-instruction">
-        Connect to the same network as this PC,<br>then scan the QR or open the URL below.
+          Connect your phone to the same Wi-Fi as this PC, <br/> then scan the QR code or open the link below
       </div>
 
       <div class="qr-section">
@@ -353,10 +388,11 @@
       <div id="lan-urls"></div>
 
       <div class="card-foot">
-        <button id="quit-btn">Exit Overlay</button>
+        <button id="quit-btn">Shutdown</button>
       </div>
 
     </div>
+    <div id="settings-hint"></div>
   </div>
 
   <script>
@@ -414,11 +450,11 @@
         try {
           const msg = JSON.parse(ev.data);
           if (msg.type === 'note') {
-            notesEl.textContent = msg.content;
-            notesEl.classList.toggle('empty', !msg.content);
+            renderNote(msg.content);
             notesEl.scrollTop = 0;
           } else if (msg.type === 'clear') {
-            notesEl.textContent = '';
+            lastContent = '';
+            notesEl.innerHTML = '';
             notesEl.classList.add('empty');
           } else if (msg.type === 'scroll') {
             notesEl.scrollBy({ top: msg.delta, behavior: 'smooth' });
@@ -426,6 +462,10 @@
             window.electronAPI.moveWindow(msg.position);
           } else if (msg.type === 'direction') {
             notesEl.style.marginTop = msg.from === 'bottom' ? 'auto' : '';
+          } else if (msg.type === 'markdown') {
+            mdEnabled = msg.enabled;
+            localStorage.setItem('md-enabled', mdEnabled);
+            renderNote(lastContent);
           } else if (msg.type === 'sender_count') {
             setSenderCount(msg.count);
           }
@@ -479,15 +519,19 @@
     }
 
     // ── Settings panel ───────────────────────────────────────────
+    const hintEl = document.getElementById('hint');
+
     function openSettings() {
       settingsOpen = true;
       settingsEl.classList.add('visible');
+      hintEl.style.opacity = '0';
       window.electronAPI.setIgnoreMouse(false);
     }
 
     function closeSettings() {
       settingsOpen = false;
       settingsEl.classList.remove('visible');
+      hintEl.style.opacity = '';
       window.electronAPI.setIgnoreMouse(true);
     }
 
@@ -496,7 +540,6 @@
       else openSettings();
     });
 
-    document.getElementById('close-btn').addEventListener('click', closeSettings);
     document.getElementById('quit-btn').addEventListener('click', () => window.electronAPI.quit());
 
     // ── Hotkey hint ──────────────────────────────────────────────
@@ -504,9 +547,27 @@
     const keys = isMac
       ? ['⌘', '⇧', '.']
       : ['Ctrl', 'Shift', '.'];
+    const keyHtml = keys.map(k => `<span class="hkey">${k}</span>`).join('');
     document.getElementById('hint').innerHTML =
-      keys.map(k => `<span class="hkey">${k}</span>`).join('') +
-      `<span class="hkey-label">settings</span>`;
+      keyHtml + `<span class="hkey-label">settings</span>`;
+    document.getElementById('settings-hint').innerHTML =
+      keyHtml + `<span class="hkey-label">Notes</span>`;
+
+    // ── Markdown ─────────────────────────────────────────────────
+    marked.use({ breaks: true });
+
+    let mdEnabled = localStorage.getItem('md-enabled') !== 'false'; // default on
+    let lastContent = '';
+
+    function renderNote(content) {
+      lastContent = content;
+      if (mdEnabled) {
+        notesEl.innerHTML = marked.parse(content);
+      } else {
+        notesEl.textContent = content;
+      }
+      notesEl.classList.toggle('empty', !content);
+    }
 
     // ── Init ─────────────────────────────────────────────────────
     async function init() {

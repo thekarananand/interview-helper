@@ -1,7 +1,7 @@
 {
-  "name": "stealth-notes-overlay",
+  "name": "ghost-protocol",
   "version": "1.0.0",
-  "description": "Stealth Notes — overlay client",
+  "description": "Ghost Protocol — stealth notes overlay",
   "main": "main.js",
   "scripts": {
     "start": "electron ."

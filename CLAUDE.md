@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-**Stealth Notes** — a single Electron app that embeds an HTTP + WebSocket server. Run the overlay on any machine; open the displayed LAN URL (or scan the QR code) on a phone or another device to send notes. Notes stream in real time to a transparent, always-on-top, click-through window hidden from screen capture on macOS and Windows.
+**Ghost Protocol** — a single Electron app that embeds an HTTP + WebSocket server. Run the overlay on any machine; open the displayed LAN URL (or scan the QR code) on a phone or another device to send notes. Notes stream in real time to a transparent, always-on-top, click-through window hidden from screen capture on macOS and Windows.
 
 ## Commands
 
@@ -76,6 +76,15 @@ Each position button sends **two messages atomically**: `move` (reposition windo
 Bottom-anchoring is implemented via `marginTop: auto` on `#notes` inside the flex-column `#notes-wrap` (not via `flex-direction: column-reverse`).
 
 `electron-store` is listed in dependencies but unused — the renderer uses `localStorage` instead (no sensitive data, noted in `preload.js`).
+
+## Typography
+
+| Role | Font |
+|---|---|
+| UI chrome (labels, buttons, settings panel) | Inter |
+| Overlay notes text, textarea (sender), IP/URL addresses | Space Mono |
+
+Both fonts are loaded from Google Fonts in each HTML file.
 
 ## Changing the port
 ```bash

@@ -104,10 +104,12 @@ app.whenReady().then(async () => {
     const margin = 20;
     const { width: winWidth, height: winHeight } = win.getBounds();
     const coords = {
-      'top-left':     { x: wx + margin,                    y: wy + margin },
-      'top-right':    { x: wx + width - winWidth - margin, y: wy + margin },
-      'bottom-left':  { x: wx + margin,                    y: wy + height - winHeight - margin },
-      'bottom-right': { x: wx + width - winWidth - margin, y: wy + height - winHeight - margin },
+      'top-left':     { x: wx + margin,                                    y: wy + margin },
+      'top-center':   { x: wx + Math.floor((width - winWidth) / 2),        y: wy + margin },
+      'top-right':    { x: wx + width - winWidth - margin,                  y: wy + margin },
+      'bottom-left':  { x: wx + margin,                                    y: wy + height - winHeight - margin },
+      'bottom-center':{ x: wx + Math.floor((width - winWidth) / 2),        y: wy + height - winHeight - margin },
+      'bottom-right': { x: wx + width - winWidth - margin,                  y: wy + height - winHeight - margin },
     };
     const pos = coords[position];
     if (pos) win.setPosition(pos.x, pos.y);
