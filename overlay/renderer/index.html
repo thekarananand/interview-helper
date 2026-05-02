@@ -47,6 +47,7 @@
     #notes {
       max-height: 100%;
       overflow-y: auto;
+      pointer-events: auto;
       background: rgba(8, 8, 8, 0.78);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -118,8 +119,29 @@
       transition: opacity 0.18s, visibility 0.18s;
     }
 
-    #settings.visible { opacity: 1; visibility: visible; }
+    #settings.visible { opacity: 1; visibility: visible; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.09); }
     #settings.visible .card { transform: scale(1); opacity: 1; }
+
+    /* resize corner hints */
+    #settings::before, #settings::after {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      opacity: 0;
+      transition: opacity 0.18s;
+    }
+    #settings::before {
+      top: 6px; left: 6px;
+      border-top: 1.5px solid rgba(255,255,255,0.28);
+      border-left: 1.5px solid rgba(255,255,255,0.28);
+    }
+    #settings::after {
+      bottom: 6px; right: 6px;
+      border-bottom: 1.5px solid rgba(255,255,255,0.28);
+      border-right: 1.5px solid rgba(255,255,255,0.28);
+    }
+    #settings.visible::before, #settings.visible::after { opacity: 1; }
 
     /* ── Card ──────────────────────────────────────────────────── */
     .card {
@@ -534,6 +556,19 @@
       hintEl.style.opacity = '';
       window.electronAPI.setIgnoreMouse(true);
     }
+
+    let overNotes = false;
+    document.addEventListener('mousemove', (e) => {
+      if (settingsOpen) return;
+      const rect = notesEl.getBoundingClientRect();
+      const nowOver = !notesEl.classList.contains('empty') &&
+        e.clientX >= rect.left && e.clientX <= rect.right &&
+        e.clientY >= rect.top  && e.clientY <= rect.bottom;
+      if (nowOver !== overNotes) {
+        overNotes = nowOver;
+        window.electronAPI.setIgnoreMouse(!nowOver);
+      }
+    });
 
     window.electronAPI.onToggleSettings(() => {
       if (settingsOpen) closeSettings();
