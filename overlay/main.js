@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, ipcMain } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, screen } = require('electron');
 const path = require('path');
 const os   = require('os');
 const { startServer } = require('./server');
@@ -124,7 +124,12 @@ app.whenReady().then(async () => {
   ipcMain.on('minimize-overlay', (_, offsetPixels) => {
     if (!win) return;
     const { x, y, width, height } = win.getBounds();
-    win.setBounds({ x, y: y + offsetPixels, width, height });
+    const { x: wx, y: wy, width: sw, height: sh } = screen.getPrimaryDisplay().workArea;
+
+    // Calculate new Y, but keep window visible (leave 80px visible at bottom)
+    const newY = Math.min(y + offsetPixels, wy + sh - 80);
+
+    win.setBounds({ x, y: newY, width, height });
   });
 
   ipcMain.handle('get-window-position', () => {
@@ -140,7 +145,13 @@ app.whenReady().then(async () => {
   ipcMain.on('drag-window', (_, { x, y }) => {
     if (!win) return;
     const { width, height } = win.getBounds();
-    win.setBounds({ x, y, width, height });
+    const { x: wx, y: wy, width: sw, height: sh } = screen.getPrimaryDisplay().workArea;
+
+    // Clamp position to screen bounds (keep window title visible)
+    const clampedX = Math.max(wx, Math.min(x, wx + sw - 50));
+    const clampedY = Math.max(wy, Math.min(y, wy + sh - 50));
+
+    win.setBounds({ x: clampedX, y: clampedY, width, height });
   });
 
   app.on('activate', () => {

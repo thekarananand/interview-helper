@@ -545,9 +545,13 @@
       if (state) {
         // Minimize
         if (window.electronAPI && window.electronAPI.getWindowPosition) {
-          window.electronAPI.getWindowPosition().then(pos => {
-            originalPosition = pos;
-          });
+          window.electronAPI.getWindowPosition()
+            .then(pos => {
+              originalPosition = pos;
+            })
+            .catch(err => {
+              console.warn('[minimize] getWindowPosition failed:', err);
+            });
         }
         notesWrap.classList.add('minimized');
         minimizeBtn.classList.add('hidden');
@@ -584,15 +588,21 @@
 
     // Task 6: Drag listeners
     function startDrag(e) {
-      if (minimized || settingsOpen) return;
+      // Don't drag when clicking buttons
+      if (e.target.closest('.min-max-btn') || minimized || settingsOpen) return;
       dragging = true;
       dragStartX = e.clientX;
       dragStartY = e.clientY;
       if (window.electronAPI && window.electronAPI.getWindowPosition) {
-        window.electronAPI.getWindowPosition().then(pos => {
-          dragOffsetX = pos.x - dragStartX;
-          dragOffsetY = pos.y - dragStartY;
-        });
+        window.electronAPI.getWindowPosition()
+          .then(pos => {
+            dragOffsetX = pos.x - dragStartX;
+            dragOffsetY = pos.y - dragStartY;
+          })
+          .catch(err => {
+            console.warn('[drag] getWindowPosition failed:', err);
+            dragging = false;
+          });
       }
     }
 
@@ -609,7 +619,9 @@
       dragging = false;
     }
 
-    notesEl.addEventListener('mousedown', startDrag);
+    // Attach drag listener to #notes-wrap instead of #notes
+    // This allows dragging when minimized (when #notes is display:none)
+    document.getElementById('notes-wrap').addEventListener('mousedown', startDrag);
     document.addEventListener('mousemove', onDrag);
     document.addEventListener('mouseup', endDrag);
 
