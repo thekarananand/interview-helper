@@ -21,11 +21,16 @@ function createWindow() {
   const { screen } = require('electron');
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
+  const winWidth  = Math.floor(width / 3);
+  const winHeight = Math.floor(height / 2);
+  const winX      = Math.floor((width  - winWidth)  / 2);
+  const winY      = Math.floor((height - winHeight) / 2);
+
   win = new BrowserWindow({
-    width: 480,
-    height: 600,
-    x: width - 500,
-    y: Math.floor(height * 0.1),
+    width:  winWidth,
+    height: winHeight,
+    x: winX,
+    y: winY,
     transparent: true,
     frame: false,
     alwaysOnTop: true,
@@ -113,6 +118,29 @@ app.whenReady().then(async () => {
     };
     const pos = coords[position];
     if (pos) win.setPosition(pos.x, pos.y);
+  });
+
+  // Task 7: IPC handlers for minimize/maximize and window positioning
+  ipcMain.on('minimize-overlay', (_, offsetPixels) => {
+    if (!win) return;
+    const { x, y, width, height } = win.getBounds();
+    win.setBounds({ x, y: y + offsetPixels, width, height });
+  });
+
+  ipcMain.handle('get-window-position', () => {
+    if (!win) return { x: 0, y: 0 };
+    const { x, y } = win.getBounds();
+    return { x, y };
+  });
+
+  ipcMain.on('maximize-overlay', () => {
+    if (!win) return;
+  });
+
+  ipcMain.on('drag-window', (_, { x, y }) => {
+    if (!win) return;
+    const { width, height } = win.getBounds();
+    win.setBounds({ x, y, width, height });
   });
 
   app.on('activate', () => {

@@ -113,42 +113,23 @@
       background: rgba(0,0,0,0.72);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
+      border-radius: 10px;
       pointer-events: all;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.18s, visibility 0.18s;
+      transition: opacity 0.18s, visibility 0.18s, box-shadow 0.18s;
     }
 
-    #settings.visible { opacity: 1; visibility: visible; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.09); }
+    #settings.visible { opacity: 1; visibility: visible; }
     #settings.visible .card { transform: scale(1); opacity: 1; }
-
-    /* resize corner hints */
-    #settings::before, #settings::after {
-      content: '';
-      position: absolute;
-      width: 12px;
-      height: 12px;
-      opacity: 0;
-      transition: opacity 0.18s;
-    }
-    #settings::before {
-      top: 6px; left: 6px;
-      border-top: 1.5px solid rgba(255,255,255,0.28);
-      border-left: 1.5px solid rgba(255,255,255,0.28);
-    }
-    #settings::after {
-      bottom: 6px; right: 6px;
-      border-bottom: 1.5px solid rgba(255,255,255,0.28);
-      border-right: 1.5px solid rgba(255,255,255,0.28);
-    }
-    #settings.visible::before, #settings.visible::after { opacity: 1; }
+    body.focused #settings.visible { box-shadow: inset 0 0 0 2px var(--green); border-radius: 10px; }
 
     /* ── Card ──────────────────────────────────────────────────── */
     .card {
       background: var(--card);
       border: 1px solid var(--border2);
       border-radius: 6px;
-      width: 300px;
+      width: 340px;
       overflow: hidden;
       transform: scale(0.96);
       opacity: 0;
@@ -160,7 +141,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 14px 16px 12px;
+      padding: 11px 16px 10px;
       border-bottom: 1px solid var(--border);
     }
 
@@ -172,36 +153,32 @@
       color: var(--dim);
     }
 
-    /* Instruction line */
-    .card-instruction {
-      padding: 10px 16px;
+    /* ── Two-column body ────────────────────────────────────────── */
+    .card-body {
+      display: grid;
+      grid-template-columns: 128px 1fr;
       border-bottom: 1px solid var(--border);
-      font-size: 10px;
-      line-height: 1.6;
-      letter-spacing: 0.04em;
-      color: var(--dim);
-      text-align: center;
     }
 
-    /* QR section */
-    .qr-section {
-      padding: 20px 0 16px;
+    .card-qr {
+      border-right: 1px solid var(--border);
       display: flex;
+      align-items: center;
       justify-content: center;
-      border-bottom: 1px solid var(--border);
+      padding: 14px;
     }
 
     #qr-img {
-      width: 172px;
-      height: 172px;
-      border-radius: 4px;
+      width: 100px;
+      height: 100px;
+      border-radius: 3px;
       display: none;
     }
 
     .qr-placeholder {
-      width: 172px;
-      height: 172px;
-      border-radius: 4px;
+      width: 100px;
+      height: 100px;
+      border-radius: 3px;
       background: var(--border);
       display: flex;
       align-items: center;
@@ -211,16 +188,29 @@
       letter-spacing: 0.08em;
     }
 
-    /* ── URL entries ────────────────────────────────────────────── */
-    #lan-urls {
-      border-bottom: 1px solid var(--border);
+    .card-right {
+      display: flex;
+      flex-direction: column;
     }
+
+    /* Instruction line */
+    .card-instruction {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 10px;
+      line-height: 1.55;
+      letter-spacing: 0.03em;
+      color: var(--dim);
+    }
+
+    /* ── URL entries ────────────────────────────────────────────── */
+    #lan-urls { flex: 1; }
 
     .url-entry {
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      padding: 10px 12px;
+      gap: 5px;
+      padding: 8px 10px;
     }
     .url-entry + .url-entry {
       border-top: 1px solid var(--border);
@@ -247,9 +237,8 @@
       background: rgba(255,255,255,0.06);
       border-color: var(--muted);
     }
-    .url-btn:hover .copy-hint { opacity: 1; }
     .url-btn.copied { border-color: var(--green); }
-    .url-btn.copied .copy-hint { opacity: 1; color: var(--green); }
+    .url-btn.copied .url-addr { color: var(--green); }
 
     .globe-icon {
       position: absolute;
@@ -270,17 +259,6 @@
       user-select: text;
     }
 
-    .copy-hint {
-      position: absolute;
-      right: 10px;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--dim);
-      opacity: 0;
-      transition: opacity 0.12s, color 0.12s;
-    }
 
     /* status on the right */
     .net-status {
@@ -382,6 +360,67 @@
       color: rgba(255,255,255,0.38);
       margin-left: 5px;
     }
+
+    /* ── Minimize/Maximize controls ────────────────────────────── */
+    #min-max-controls {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      margin-top: 8px;
+      pointer-events: auto;
+    }
+
+    .min-max-btn {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      color: var(--dim);
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+      flex-shrink: 0;
+    }
+
+    .min-max-btn:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.15);
+      color: var(--text);
+    }
+
+    .min-max-btn:active {
+      background: rgba(255,255,255,0.09);
+      transform: scale(0.92);
+    }
+
+    .min-max-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .min-max-btn.hidden {
+      display: none;
+    }
+
+    /* Minimized state styles */
+    #notes-wrap.minimized #min-max-controls {
+      justify-content: center;
+      margin-top: 0;
+    }
+
+    #notes-wrap.minimized .min-max-btn {
+      width: 48px;
+      height: 48px;
+    }
+
+    #notes-wrap.minimized .min-max-btn svg {
+      width: 20px;
+      height: 20px;
+    }
   </style>
 </head>
 <body>
@@ -389,6 +428,18 @@
   <div id="notes-wrap">
     <div id="notes" class="empty"></div>
     <div id="hint"></div>
+    <div id="min-max-controls">
+      <button id="minimize-btn" class="min-max-btn" title="Minimize overlay" aria-label="Minimize overlay">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="4" y1="8" x2="12" y2="8"/>
+        </svg>
+      </button>
+      <button id="maximize-btn" class="min-max-btn hidden" title="Maximize overlay" aria-label="Maximize overlay">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="4" y1="12" x2="12" y2="12"/><line x1="8" y1="8" x2="8" y2="12"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <div id="settings">
@@ -398,16 +449,18 @@
         <span class="card-title">Ghost Protocol</span>
       </div>
 
-      <div class="card-instruction">
-          Connect your phone to the same Wi-Fi as this PC, <br/> then scan the QR code or open the link below
+      <div class="card-body">
+        <div class="card-qr">
+          <div class="qr-placeholder" id="qr-placeholder">loading</div>
+          <img id="qr-img" alt="" />
+        </div>
+        <div class="card-right">
+          <div class="card-instruction">
+            Same Wi-Fi as this machine.<br>Scan QR or open URL on phone.
+          </div>
+          <div id="lan-urls"></div>
+        </div>
       </div>
-
-      <div class="qr-section">
-        <div class="qr-placeholder" id="qr-placeholder">loading</div>
-        <img id="qr-img" alt="" />
-      </div>
-
-      <div id="lan-urls"></div>
 
       <div class="card-foot">
         <button id="quit-btn">Shutdown</button>
@@ -437,6 +490,24 @@
     let wsState = 'info'; // 'ok' | 'err' | 'info'
     let senderCount = 0;
 
+    // Task 3: Initialize state tracking
+    let minimized = false;
+    let originalPosition = { x: 0, y: 0 };
+    let dragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+
+    function loadMinimizeState() {
+      const stored = localStorage.getItem('overlay-minimized');
+      if (stored === 'true') {
+        setTimeout(() => {
+          applyMinimizeState(true);
+        }, 100);
+      }
+    }
+
     function senderLabel() {
       return senderCount === 0 ? 'no senders' : senderCount === 1 ? '1 sender' : `${senderCount} senders`;
     }
@@ -455,6 +526,92 @@
         el.querySelector('.status-label').textContent = senderLabel();
       });
     }
+
+    // Task 4: Click handlers and state functions
+    function sendMinimizeMessage(state) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'minimize', minimized: state }));
+      }
+    }
+
+    function applyMinimizeState(state) {
+      minimized = state;
+      const notesWrap = document.getElementById('notes-wrap');
+      const minimizeBtn = document.getElementById('minimize-btn');
+      const maximizeBtn = document.getElementById('maximize-btn');
+      const notesEl = document.getElementById('notes');
+      const hintEl = document.getElementById('hint');
+
+      if (state) {
+        // Minimize
+        if (window.electronAPI && window.electronAPI.getWindowPosition) {
+          window.electronAPI.getWindowPosition().then(pos => {
+            originalPosition = pos;
+          });
+        }
+        notesWrap.classList.add('minimized');
+        minimizeBtn.classList.add('hidden');
+        maximizeBtn.classList.remove('hidden');
+        notesEl.style.display = 'none';
+        hintEl.style.display = 'none';
+        localStorage.setItem('overlay-minimized', 'true');
+        if (window.electronAPI && window.electronAPI.minimizeOverlay) {
+          window.electronAPI.minimizeOverlay(200);
+        }
+      } else {
+        // Maximize
+        notesWrap.classList.remove('minimized');
+        minimizeBtn.classList.remove('hidden');
+        maximizeBtn.classList.add('hidden');
+        notesEl.style.display = '';
+        hintEl.style.display = '';
+        localStorage.setItem('overlay-minimized', 'false');
+        if (window.electronAPI && window.electronAPI.dragWindow) {
+          window.electronAPI.dragWindow(originalPosition.x, originalPosition.y);
+        }
+      }
+    }
+
+    document.getElementById('minimize-btn').addEventListener('click', () => {
+      sendMinimizeMessage(true);
+      applyMinimizeState(true);
+    });
+
+    document.getElementById('maximize-btn').addEventListener('click', () => {
+      sendMinimizeMessage(false);
+      applyMinimizeState(false);
+    });
+
+    // Task 6: Drag listeners
+    function startDrag(e) {
+      if (minimized || settingsOpen) return;
+      dragging = true;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      if (window.electronAPI && window.electronAPI.getWindowPosition) {
+        window.electronAPI.getWindowPosition().then(pos => {
+          dragOffsetX = pos.x - dragStartX;
+          dragOffsetY = pos.y - dragStartY;
+        });
+      }
+    }
+
+    function onDrag(e) {
+      if (!dragging) return;
+      const newX = e.clientX + dragOffsetX;
+      const newY = e.clientY + dragOffsetY;
+      if (window.electronAPI && window.electronAPI.dragWindow) {
+        window.electronAPI.dragWindow(newX, newY);
+      }
+    }
+
+    function endDrag() {
+      dragging = false;
+    }
+
+    notesEl.addEventListener('mousedown', startDrag);
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('mouseup', endDrag);
 
     function connectTo(url) {
       if (ws) { ws.onclose = null; ws.close(); }
@@ -488,6 +645,8 @@
             mdEnabled = msg.enabled;
             localStorage.setItem('md-enabled', mdEnabled);
             renderNote(lastContent);
+          } else if (msg.type === 'minimize') {
+            applyMinimizeState(msg.minimized);
           } else if (msg.type === 'sender_count') {
             setSenderCount(msg.count);
           }
@@ -519,14 +678,16 @@
 
         const btn = document.createElement('button');
         btn.className = 'url-btn';
-        btn.innerHTML = `${GLOBE_SVG}<span class="url-addr">${url.replace(/^https?:\/\//, '')}</span><span class="copy-hint">copy</span>`;
+        const displayUrl = url.replace(/^https?:\/\//, '');
+        btn.innerHTML = `${GLOBE_SVG}<span class="url-addr">${displayUrl}</span>`;
         btn.addEventListener('click', () => {
           navigator.clipboard.writeText(url).then(() => {
+            const addr = btn.querySelector('.url-addr');
             btn.classList.add('copied');
-            btn.querySelector('.copy-hint').textContent = 'done';
+            addr.textContent = 'COPIED';
             setTimeout(() => {
               btn.classList.remove('copied');
-              btn.querySelector('.copy-hint').textContent = 'copy';
+              addr.textContent = displayUrl;
             }, 2000);
           });
         });
@@ -556,6 +717,10 @@
       hintEl.style.opacity = '';
       window.electronAPI.setIgnoreMouse(true);
     }
+
+    if (document.hasFocus()) document.body.classList.add('focused');
+    window.addEventListener('focus', () => document.body.classList.add('focused'));
+    window.addEventListener('blur',  () => document.body.classList.remove('focused'));
 
     let overNotes = false;
     document.addEventListener('mousemove', (e) => {
@@ -599,7 +764,11 @@
       if (mdEnabled) {
         notesEl.innerHTML = marked.parse(content);
       } else {
-        notesEl.textContent = content;
+        const escaped = content
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+        notesEl.innerHTML = `<span style="white-space:pre-wrap">${escaped}</span>`;
       }
       notesEl.classList.toggle('empty', !content);
     }
@@ -620,6 +789,7 @@
         console.warn('[renderer] getServerUrls failed:', err);
         renderLanUrls([]);
       }
+      loadMinimizeState();
       connectTo(wsUrl);
     }
 

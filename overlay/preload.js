@@ -8,4 +8,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   moveWindow: (position) => ipcRenderer.send('move-window', position),
   quit: () => ipcRenderer.send('quit-app'),
   getServerUrls: () => ipcRenderer.invoke('get-server-urls'),
+  minimizeOverlay: (offsetPixels) => ipcRenderer.send('minimize-overlay', offsetPixels),
+  getWindowPosition: () => ipcRenderer.invoke('get-window-position'),
+  maximizeOverlay: () => ipcRenderer.send('maximize-overlay'),
+  dragWindow: (x, y) => ipcRenderer.send('drag-window', { x, y }),
 });
