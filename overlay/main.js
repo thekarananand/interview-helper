@@ -120,26 +120,10 @@ app.whenReady().then(async () => {
     if (pos) win.setPosition(pos.x, pos.y);
   });
 
-  // Task 7: IPC handlers for minimize/maximize and window positioning
-  ipcMain.on('minimize-overlay', (_, offsetPixels) => {
-    if (!win) return;
-    const { x, y, width, height } = win.getBounds();
-    const { x: wx, y: wy, width: sw, height: sh } = screen.getPrimaryDisplay().workArea;
-
-    // Calculate new Y, but keep window visible (leave 80px visible at bottom)
-    const newY = Math.min(y + offsetPixels, wy + sh - 80);
-
-    win.setBounds({ x, y: newY, width, height });
-  });
-
   ipcMain.handle('get-window-position', () => {
     if (!win) return { x: 0, y: 0 };
     const { x, y } = win.getBounds();
     return { x, y };
-  });
-
-  ipcMain.on('maximize-overlay', () => {
-    if (!win) return;
   });
 
   ipcMain.on('drag-window', (_, { x, y }) => {

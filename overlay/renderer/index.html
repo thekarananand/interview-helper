@@ -361,66 +361,6 @@
       margin-left: 5px;
     }
 
-    /* ── Minimize/Maximize controls ────────────────────────────── */
-    #min-max-controls {
-      display: flex;
-      justify-content: center;
-      gap: 0;
-      margin-top: 8px;
-      pointer-events: auto;
-    }
-
-    .min-max-btn {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 6px;
-      color: var(--dim);
-      width: 28px;
-      height: 28px;
-      padding: 0;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.12s, border-color 0.12s, color 0.12s;
-      flex-shrink: 0;
-    }
-
-    .min-max-btn:hover {
-      background: rgba(255,255,255,0.06);
-      border-color: rgba(255,255,255,0.15);
-      color: var(--text);
-    }
-
-    .min-max-btn:active {
-      background: rgba(255,255,255,0.09);
-      transform: scale(0.92);
-    }
-
-    .min-max-btn svg {
-      width: 14px;
-      height: 14px;
-    }
-
-    .min-max-btn.hidden {
-      display: none;
-    }
-
-    /* Minimized state styles */
-    #notes-wrap.minimized #min-max-controls {
-      justify-content: center;
-      margin-top: 0;
-    }
-
-    #notes-wrap.minimized .min-max-btn {
-      width: 48px;
-      height: 48px;
-    }
-
-    #notes-wrap.minimized .min-max-btn svg {
-      width: 20px;
-      height: 20px;
-    }
   </style>
 </head>
 <body>
@@ -428,18 +368,6 @@
   <div id="notes-wrap">
     <div id="notes" class="empty"></div>
     <div id="hint"></div>
-    <div id="min-max-controls">
-      <button id="minimize-btn" class="min-max-btn" title="Minimize overlay" aria-label="Minimize overlay">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <line x1="4" y1="8" x2="12" y2="8"/>
-        </svg>
-      </button>
-      <button id="maximize-btn" class="min-max-btn hidden" title="Maximize overlay" aria-label="Maximize overlay">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <line x1="4" y1="12" x2="12" y2="12"/><line x1="8" y1="8" x2="8" y2="12"/>
-        </svg>
-      </button>
-    </div>
   </div>
 
   <div id="settings">
@@ -490,23 +418,11 @@
     let wsState = 'info'; // 'ok' | 'err' | 'info'
     let senderCount = 0;
 
-    // Task 3: Initialize state tracking
-    let minimized = false;
-    let originalPosition = { x: 0, y: 0 };
     let dragging = false;
     let dragStartX = 0;
     let dragStartY = 0;
     let dragOffsetX = 0;
     let dragOffsetY = 0;
-
-    function loadMinimizeState() {
-      const stored = localStorage.getItem('overlay-minimized');
-      if (stored === 'true') {
-        setTimeout(() => {
-          applyMinimizeState(true);
-        }, 100);
-      }
-    }
 
     function senderLabel() {
       return senderCount === 0 ? 'no senders' : senderCount === 1 ? '1 sender' : `${senderCount} senders`;
@@ -527,69 +443,9 @@
       });
     }
 
-    // Task 4: Click handlers and state functions
-    function sendMinimizeMessage(state) {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'minimize', minimized: state }));
-      }
-    }
-
-    function applyMinimizeState(state) {
-      minimized = state;
-      const notesWrap = document.getElementById('notes-wrap');
-      const minimizeBtn = document.getElementById('minimize-btn');
-      const maximizeBtn = document.getElementById('maximize-btn');
-      const notesEl = document.getElementById('notes');
-      const hintEl = document.getElementById('hint');
-
-      if (state) {
-        // Minimize
-        if (window.electronAPI && window.electronAPI.getWindowPosition) {
-          window.electronAPI.getWindowPosition()
-            .then(pos => {
-              originalPosition = pos;
-            })
-            .catch(err => {
-              console.warn('[minimize] getWindowPosition failed:', err);
-            });
-        }
-        notesWrap.classList.add('minimized');
-        minimizeBtn.classList.add('hidden');
-        maximizeBtn.classList.remove('hidden');
-        notesEl.style.display = 'none';
-        hintEl.style.display = 'none';
-        localStorage.setItem('overlay-minimized', 'true');
-        if (window.electronAPI && window.electronAPI.minimizeOverlay) {
-          window.electronAPI.minimizeOverlay(200);
-        }
-      } else {
-        // Maximize
-        notesWrap.classList.remove('minimized');
-        minimizeBtn.classList.remove('hidden');
-        maximizeBtn.classList.add('hidden');
-        notesEl.style.display = '';
-        hintEl.style.display = '';
-        localStorage.setItem('overlay-minimized', 'false');
-        if (window.electronAPI && window.electronAPI.dragWindow) {
-          window.electronAPI.dragWindow(originalPosition.x, originalPosition.y);
-        }
-      }
-    }
-
-    document.getElementById('minimize-btn').addEventListener('click', () => {
-      sendMinimizeMessage(true);
-      applyMinimizeState(true);
-    });
-
-    document.getElementById('maximize-btn').addEventListener('click', () => {
-      sendMinimizeMessage(false);
-      applyMinimizeState(false);
-    });
-
-    // Task 6: Drag listeners
+    // Drag listeners
     function startDrag(e) {
-      // Don't drag when clicking buttons
-      if (e.target.closest('.min-max-btn') || minimized || settingsOpen) return;
+      if (settingsOpen) return;
       dragging = true;
       dragStartX = e.clientX;
       dragStartY = e.clientY;
@@ -657,8 +513,6 @@
             mdEnabled = msg.enabled;
             localStorage.setItem('md-enabled', mdEnabled);
             renderNote(lastContent);
-          } else if (msg.type === 'minimize') {
-            applyMinimizeState(msg.minimized);
           } else if (msg.type === 'sender_count') {
             setSenderCount(msg.count);
           }
@@ -801,7 +655,6 @@
         console.warn('[renderer] getServerUrls failed:', err);
         renderLanUrls([]);
       }
-      loadMinimizeState();
       connectTo(wsUrl);
     }
 
