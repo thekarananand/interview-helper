@@ -6,6 +6,8 @@ const QRCode = require('qrcode');
 
 let win;
 let serverPort = 3000;
+let windowWidth = 0;
+let windowHeight = 0;
 
 function getLanUrls(port) {
   const urls = [];
@@ -25,6 +27,10 @@ function createWindow() {
   const winHeight = Math.floor(height / 2);
   const winX      = Math.floor((width  - winWidth)  / 2);
   const winY      = Math.floor((height - winHeight) / 2);
+
+  // Store dimensions globally to preserve during drag on Windows
+  windowWidth = winWidth;
+  windowHeight = winHeight;
 
   win = new BrowserWindow({
     width:  winWidth,
@@ -107,14 +113,13 @@ app.whenReady().then(async () => {
     const { screen } = require('electron');
     const { x: wx, y: wy, width, height } = screen.getPrimaryDisplay().workArea;
     const margin = 20;
-    const { width: winWidth, height: winHeight } = win.getBounds();
     const coords = {
       'top-left':     { x: wx + margin,                                    y: wy + margin },
-      'top-center':   { x: wx + Math.floor((width - winWidth) / 2),        y: wy + margin },
-      'top-right':    { x: wx + width - winWidth - margin,                  y: wy + margin },
-      'bottom-left':  { x: wx + margin,                                    y: wy + height - winHeight - margin },
-      'bottom-center':{ x: wx + Math.floor((width - winWidth) / 2),        y: wy + height - winHeight - margin },
-      'bottom-right': { x: wx + width - winWidth - margin,                  y: wy + height - winHeight - margin },
+      'top-center':   { x: wx + Math.floor((width - windowWidth) / 2),     y: wy + margin },
+      'top-right':    { x: wx + width - windowWidth - margin,              y: wy + margin },
+      'bottom-left':  { x: wx + margin,                                    y: wy + height - windowHeight - margin },
+      'bottom-center':{ x: wx + Math.floor((width - windowWidth) / 2),     y: wy + height - windowHeight - margin },
+      'bottom-right': { x: wx + width - windowWidth - margin,              y: wy + height - windowHeight - margin },
     };
     const pos = coords[position];
     if (pos) win.setPosition(pos.x, pos.y);
@@ -128,14 +133,14 @@ app.whenReady().then(async () => {
 
   ipcMain.on('drag-window', (_, { x, y }) => {
     if (!win) return;
-    const { width, height } = win.getBounds();
     const { x: wx, y: wy, width: sw, height: sh } = screen.getPrimaryDisplay().workArea;
 
     // Clamp position to screen bounds (keep window title visible)
     const clampedX = Math.max(wx, Math.min(x, wx + sw - 50));
     const clampedY = Math.max(wy, Math.min(y, wy + sh - 50));
 
-    win.setBounds({ x: clampedX, y: clampedY, width, height });
+    // Use cached dimensions to prevent OS resize interference on Windows
+    win.setBounds({ x: clampedX, y: clampedY, width: windowWidth, height: windowHeight });
   });
 
   app.on('activate', () => {
